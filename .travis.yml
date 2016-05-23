@@ -1,0 +1,20 @@
+sudo: false
+language: go
+
+go:
+  - 1.5.4
+  - 1.6.2
+
+install:
+  - go get -u github.com/osamingo/gochic
+  - go get -u github.com/stretchr/testify/assert
+  - go get -u github.com/stretchr/testify/require
+
+before_script:
+  - gochic ./...
+
+script:
+  - go test -cover -race ./...
+
+after_script:
+  - go build ./...
