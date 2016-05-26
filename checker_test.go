@@ -17,6 +17,12 @@ func TestIsGoogleBot(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, ret)
 
+	r.Header.Set("User-Agent", "bot")
+	r.RemoteAddr = "127.0.0.1"
+	ret, err = IsGoogleBot(r)
+	require.NoError(t, err)
+	assert.False(t, ret)
+
 	r.Header.Set("User-Agent", "Googlebot")
 	ret, err = IsGoogleBot(r)
 	require.NoError(t, err)
