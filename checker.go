@@ -8,23 +8,31 @@ import (
 )
 
 // list of private subnets.
-var privateMasks = func(ips ...string) []net.IPNet {
+var privateMasks = toMasks("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")
+
+// converts a list of subnets' string to a list of net.IPNet.
+func toMasks(ips ...string) []net.IPNet {
 	masks := make([]net.IPNet, 0, len(ips))
 	for i := range ips {
 		_, network, _ := net.ParseCIDR(ips[i])
 		masks = append(masks, *network)
 	}
 	return masks
-}("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")
+}
 
 // IsGoogleBot checks a request from GoogleBot or not.
 func IsGoogleBot(r *http.Request) (bool, error) {
 
-	if !strings.Contains(r.UserAgent(), "Googlebot") {
+	ua, addr := r.UserAgent(), r.RemoteAddr
+	if ua == "" || addr == "" {
 		return false, nil
 	}
 
-	ip := net.ParseIP(r.RemoteAddr)
+	if !strings.Contains(ua, "Googlebot") {
+		return false, nil
+	}
+
+	ip := net.ParseIP(addr)
 	if ip == nil || !ip.IsGlobalUnicast() {
 		return false, nil
 	}
@@ -40,7 +48,7 @@ func IsGoogleBot(r *http.Request) (bool, error) {
 		return false, err
 	}
 
-	host := fmt.Sprintf("crawl-%s.googlebot.com.", strings.Replace(ip.String(), ".", "-", -1))
+	host := fmt.Sprintf("crawl-%s.googlebot.com.", strings.Replace(ip.String(), ".", "-", 4))
 	for i := range names {
 		if host == names[i] {
 			return true, nil
