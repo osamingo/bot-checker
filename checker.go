@@ -1,11 +1,21 @@
 package botchecker
 
 import (
-	"fmt"
 	"net"
 	"net/http"
-	"strings"
 )
+
+type (
+	// A BotType is a type of bot.
+	BotType string
+	// BotChecker interface
+	BotChecker interface {
+		Check(*http.Request) (BotType, error)
+	}
+)
+
+// BotTypeNoBot is no bot request.
+const BotTypeNoBot = BotType("")
 
 // list of private subnets.
 var privateMasks = toMasks("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")
@@ -20,40 +30,34 @@ func toMasks(ips ...string) []net.IPNet {
 	return masks
 }
 
-// IsGoogleBot checks a request from GoogleBot or not.
-func IsGoogleBot(r *http.Request) (bool, error) {
+// Do bot checks.
+func Do(r *http.Request, checkers ...BotChecker) (BotType, error) {
 
 	ua, addr := r.UserAgent(), r.RemoteAddr
 	if ua == "" || addr == "" {
-		return false, nil
-	}
-
-	if !strings.Contains(ua, "Googlebot") {
-		return false, nil
+		return BotTypeNoBot, nil
 	}
 
 	ip := net.ParseIP(addr)
 	if ip == nil || !ip.IsGlobalUnicast() {
-		return false, nil
+		return BotTypeNoBot, nil
 	}
 
 	for i := range privateMasks {
 		if privateMasks[i].Contains(ip) {
-			return false, nil
+			return BotTypeNoBot, nil
 		}
 	}
 
-	names, err := net.LookupAddr(ip.String())
-	if err != nil {
-		return false, err
-	}
-
-	host := fmt.Sprintf("crawl-%s.googlebot.com.", strings.Replace(ip.String(), ".", "-", 4))
-	for i := range names {
-		if host == names[i] {
-			return true, nil
+	for i := range checkers {
+		bot, err := checkers[i].Check(r)
+		if bot != BotTypeNoBot {
+			return bot, nil
+		}
+		if err != nil {
+			return BotTypeNoBot, err
 		}
 	}
 
-	return false, nil
+	return BotTypeNoBot, nil
 }
