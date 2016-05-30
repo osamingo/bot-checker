@@ -1,6 +1,7 @@
 package botchecker
 
 import (
+	"errors"
 	"net/http"
 	"testing"
 
@@ -8,25 +9,41 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type mock struct{}
+
+func (m *mock) Check(r *http.Request) (BotType, error) {
+	if r.UserAgent() == "fakerror" {
+		return BotTypeNoBot, errors.New("fakerror")
+	}
+
+	if r.UserAgent() == "imbot" {
+		return BotType("dummy"), nil
+	}
+
+	return BotTypeNoBot, nil
+}
+
 func TestIsGoogleBot(t *testing.T) {
+
+	m := new(mock)
 
 	r, err := http.NewRequest("", "", nil)
 	require.NoError(t, err)
 
-	ret, err := IsGoogleBot(r)
+	bot, err := Do(r, m)
 	require.NoError(t, err)
-	assert.False(t, ret)
+	assert.Equal(t, BotTypeNoBot, bot)
 
 	r.Header.Set("User-Agent", "bot")
 	r.RemoteAddr = "127.0.0.1"
-	ret, err = IsGoogleBot(r)
+	bot, err = Do(r, m)
 	require.NoError(t, err)
-	assert.False(t, ret)
+	assert.Equal(t, BotTypeNoBot, bot)
 
 	r.Header.Set("User-Agent", "Googlebot")
-	ret, err = IsGoogleBot(r)
+	bot, err = Do(r, m)
 	require.NoError(t, err)
-	assert.False(t, ret)
+	assert.Equal(t, BotTypeNoBot, bot)
 
 	ips := []string{
 		// broadcast address
@@ -40,18 +57,23 @@ func TestIsGoogleBot(t *testing.T) {
 	}
 	for _, ip := range ips {
 		r.RemoteAddr = ip
-		ret, err = IsGoogleBot(r)
+		bot, err = Do(r, m)
 		require.NoError(t, err)
-		assert.False(t, ret)
+		assert.Equal(t, BotTypeNoBot, bot)
 	}
 
-	r.RemoteAddr = "255.255.255.200"
-	ret, err = IsGoogleBot(r)
-	require.Error(t, err)
-	assert.False(t, ret)
-
 	r.RemoteAddr = "66.249.75.228"
-	ret, err = IsGoogleBot(r)
+	bot, err = Do(r, m)
 	require.NoError(t, err)
-	assert.True(t, ret)
+	assert.Equal(t, BotTypeNoBot, bot)
+
+	r.Header.Set("User-Agent", "fakerror")
+	bot, err = Do(r, m)
+	require.Error(t, err)
+	assert.Equal(t, BotTypeNoBot, bot)
+
+	r.Header.Set("User-Agent", "imbot")
+	bot, err = Do(r, m)
+	require.NoError(t, err)
+	assert.Equal(t, BotType("dummy"), bot)
 }
