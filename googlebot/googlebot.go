@@ -1,7 +1,6 @@
 package googlebot
 
 import (
-	"fmt"
 	"net"
 	"net/http"
 	"strings"
@@ -27,15 +26,31 @@ func (c *Checker) Check(r *http.Request) (botchecker.BotType, error) {
 		return botchecker.BotTypeNoBot, nil
 	}
 
-	ip := r.RemoteAddr
-	names, err := net.LookupAddr(ip)
+	ip := net.ParseIP(r.RemoteAddr)
+	names, err := net.LookupAddr(ip.String())
 	if err != nil {
 		return botchecker.BotTypeNoBot, err
 	}
 
-	host := fmt.Sprintf("crawl-%s.googlebot.com.", strings.Replace(ip, ".", "-", 4))
+	host := ""
 	for i := range names {
-		if host == names[i] {
+		if strings.HasSuffix(names[i], ".googlebot.com.") || strings.HasSuffix(names[i], ".google.com.") {
+			host = names[i]
+			break
+		}
+	}
+
+	if host == "" {
+		return botchecker.BotTypeNoBot, nil
+	}
+
+	ret, err := net.LookupIP(host[:len(host)-1])
+	if err != nil {
+		return botchecker.BotTypeNoBot, err
+	}
+
+	for i := range ret {
+		if ip.Equal(ret[i]) {
 			return BotTypeGooglebot, nil
 		}
 	}
