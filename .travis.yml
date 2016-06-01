@@ -9,12 +9,16 @@ install:
   - go get -u github.com/osamingo/gochic
   - go get -u github.com/stretchr/testify/assert
   - go get -u github.com/stretchr/testify/require
+  - go get -u github.com/pierrre/gotestcover
 
 before_script:
   - gochic ./...
 
 script:
-  - go test -cover -race ./...
+  - gotestcover -coverprofile=coverage.txt ./...
 
 after_script:
   - go build ./...
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

@@ -8,7 +8,7 @@ import (
 type (
 	// A BotType is a type of bot.
 	BotType string
-	// BotChecker interface
+	// BotChecker interface.
 	BotChecker interface {
 		Check(*http.Request) (BotType, error)
 	}
@@ -17,8 +17,12 @@ type (
 // BotTypeNoBot is no bot request.
 const BotTypeNoBot = BotType("")
 
-// list of private subnets.
-var privateMasks = toMasks("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")
+var (
+	// list of private subnets.
+	privateMasks = toMasks("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")
+	// defalut checkers.
+	defaultCheckers []BotChecker
+)
 
 // converts a list of subnets' string to a list of net.IPNet.
 func toMasks(ips ...string) []net.IPNet {
@@ -28,6 +32,13 @@ func toMasks(ips ...string) []net.IPNet {
 		masks = append(masks, *network)
 	}
 	return masks
+}
+
+// AddDefaultCheckers adds checker to default checkers.
+func AddDefaultCheckers(checkers ...BotChecker) {
+	for i := range checkers {
+		defaultCheckers = append(defaultCheckers, checkers[i])
+	}
 }
 
 // Do bot checks.
@@ -48,6 +59,8 @@ func Do(r *http.Request, checkers ...BotChecker) (BotType, error) {
 			return BotTypeNoBot, nil
 		}
 	}
+
+	checkers = append(checkers, defaultCheckers...)
 
 	for i := range checkers {
 		bot, err := checkers[i].Check(r)
