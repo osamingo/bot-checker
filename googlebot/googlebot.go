@@ -26,7 +26,12 @@ func (c *Checker) Check(r *http.Request) (botchecker.BotType, error) {
 		return botchecker.BotTypeNoBot, nil
 	}
 
-	ip := net.ParseIP(r.RemoteAddr)
+	addr, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		addr = r.RemoteAddr
+	}
+
+	ip := net.ParseIP(addr)
 	names, err := net.LookupAddr(ip.String())
 	if err != nil {
 		return botchecker.BotTypeNoBot, err
@@ -44,7 +49,7 @@ func (c *Checker) Check(r *http.Request) (botchecker.BotType, error) {
 		return botchecker.BotTypeNoBot, nil
 	}
 
-	ret, err := net.LookupIP(host[:len(host)-1])
+	ret, err := net.LookupIP(host)
 	if err != nil {
 		return botchecker.BotTypeNoBot, err
 	}
