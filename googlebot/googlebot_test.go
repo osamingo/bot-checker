@@ -27,7 +27,7 @@ func TestGooglebotCheker(t *testing.T) {
 	assert.Equal(t, botchecker.BotTypeNoBot, bot)
 
 	r.Header.Set("User-Agent", "Googlebot")
-	r.RemoteAddr = "127.0.0.1"
+	r.RemoteAddr = "127.0.0.1:23456"
 	bot, err = gc.Check(r)
 	require.NoError(t, err)
 	assert.Equal(t, botchecker.BotTypeNoBot, bot)
