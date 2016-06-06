@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/osamingo/bot-checker.svg?branch=master)](https://travis-ci.org/osamingo/bot-checker)
 [![codecov](https://codecov.io/gh/osamingo/bot-checker/branch/master/graph/badge.svg)](https://codecov.io/gh/osamingo/bot-checker)
 [![Go Report Card](https://goreportcard.com/badge/osamingo/bot-checker)](https://goreportcard.com/report/osamingo/bot-checker)
+[![codebeat badge](https://codebeat.co/badges/55b7e669-50d7-48a2-ba97-c8f161ab57cb)](https://codebeat.co/projects/github-com-osamingo-bot-checker)
 [![GoDoc](https://godoc.org/github.com/osamingo/bot-checker?status.svg)](https://godoc.org/github.com/osamingo/bot-checker)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/osamingo/bot-checker/master/LICENSE)
 
